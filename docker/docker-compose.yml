@@ -1,1 +1,26 @@
-# Configurație pentru rularea ambelor containere Docker.
+version: "1.0"
+
+services:
+  monitor:
+    build:
+      context: ./monitor
+    container_name: monitor_service
+    environment:
+      - INTERVAL=5
+    volumes:
+      - system_data:/data
+    restart: always
+
+  backup:
+    build:
+      context: ./backup
+    container_name: backup_service
+    environment:
+      - BACKUP_INTERVAL=5
+      - BACKUP_DIR=/data/backup
+    volumes:
+      - system_data:/data
+    restart: always
+
+volumes:
+  system_data:

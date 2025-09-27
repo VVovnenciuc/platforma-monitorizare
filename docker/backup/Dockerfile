@@ -1,1 +1,12 @@
-# Dockerfile pentru imaginea scriptului de backup Python.
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY backup.py .
+
+ENV BACKUP_INTERVAL=5
+ENV BACKUP_DIR=/data/backup
+
+VOLUME ["/data"]
+
+CMD ["python", "backup.py"]

@@ -1,1 +1,14 @@
-# Dockerfile pentru imaginea scriptului de monitorizare bash.
+FROM alpine:latest
+
+RUN apk add --no-cache bash coreutils procps
+
+COPY monitor.sh /usr/local/bin/monitoring.sh
+RUN chmod +x /usr/local/bin/monitoring.sh
+
+ENV INTERVAL=5
+
+VOLUME ["/data"]
+
+WORKDIR /data
+
+CMD ["bash", "/usr/local/bin/monitoring.sh"]
