@@ -7,7 +7,7 @@ import shutil
 # ===== Configurări din variabile de mediu =====
 BACKUP_INTERVAL = int(os.getenv("BACKUP_INTERVAL", 5))  # secunde
 BACKUP_DIR = os.getenv("BACKUP_DIR", "backup")
-LOG_FILE = "system-state.log"
+LOG_FILE = "/data/system-state.log"
 
 # ===== Asigură că directorul de backup există =====
 if not os.path.exists(BACKUP_DIR):

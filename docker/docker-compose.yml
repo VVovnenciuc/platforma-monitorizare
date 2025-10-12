@@ -1,26 +1,28 @@
-version: "1.0"
-
 services:
-  monitor:
+  monitoring:
     build:
-      context: ./monitor
-    container_name: monitor_service
+      context: ../
+      dockerfile: docker/monitoring/Dockerfile
+    container_name: monitoring_service
     environment:
       - INTERVAL=5
     volumes:
-      - system_data:/data
+      - shared-data:/data
     restart: always
 
   backup:
     build:
-      context: ./backup
+      context: ../
+      dockerfile: docker/backup/Dockerfile
     container_name: backup_service
     environment:
       - BACKUP_INTERVAL=5
       - BACKUP_DIR=/data/backup
     volumes:
-      - system_data:/data
+      - shared-data:/data
+    depends_on:
+      - monitoring
     restart: always
 
 volumes:
-  system_data:
+  shared-data:
