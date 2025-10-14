@@ -3,6 +3,7 @@ services:
     build:
       context: ../
       dockerfile: docker/monitoring/Dockerfile
+    image: vvovnenciuc/monitoring_image:latest
     container_name: monitoring_service
     environment:
       - INTERVAL=5
@@ -14,6 +15,7 @@ services:
     build:
       context: ../
       dockerfile: docker/backup/Dockerfile
+    image: vvovnenciuc/backup_image:latest
     container_name: backup_service
     environment:
       - BACKUP_INTERVAL=5
