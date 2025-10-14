@@ -4,7 +4,7 @@ kind: Deployment
 
 metadata:
   name: monitoring-app
-  namespace: default
+  namespace: monitoring
   labels:
     app: monitoring-app
   
@@ -27,6 +27,7 @@ spec:
           volumeMounts:
             - name: shared-data
               mountPath: /data
+
         - name: backup
           image: vvovnenciuc/backup_image:latest
           env:
@@ -38,5 +39,18 @@ spec:
             - name: shared-data
               mountPath: /data
 
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: shared-data
+              mountPath: /usr/share/nginx/html/logs
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              ln -sf /usr/share/nginx/html/logs/system-state.log /usr/share/nginx/html/index.html
+              nginx -g 'daemon off;' 
       volumes:
         - name: shared-data
+          emptyDir: {}

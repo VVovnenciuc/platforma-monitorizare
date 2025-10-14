@@ -3,6 +3,8 @@ kind: HorizontalPodAutoscaler
 metadata:
   name: monitoring-app-hpa
   namespace: monitoring
+  labels:
+    app: monitoring-app
 spec:
   scaleTargetRef:
     kind: Deployment

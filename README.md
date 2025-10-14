@@ -1,18 +1,22 @@
-Proiectul "Platforma monitorizare" contine doua servicii Docker:
-    'monitoring' - care verifica starea sistemului la un anumit interval (default 5s) si inscrie informatia in fisierul system-state.log
-    'backup' - care verifica o data la un anumit interval (default 5s) daca s-a modificat fisierul si ii face backup in directorul /backup
+# Platforma de Monitorizare
 
-## Cerinte
+Acest proiect conține două servicii care colaborează pentru a monitoriza și salva starea sistemului:
+
+- **monitoring** — verifică starea sistemului la un interval definit și scrie rezultatul în `system-state.log`
+- **backup** — verifică modificările din fișierul de log și salvează backup-uri în `/backup`
+
+## Cerințe
 
 - [Docker](https://docs.docker.com/get-docker/) (versiune recentă)
 - [Docker Compose](https://docs.docker.com/compose/install/) (de preferat integrat în Docker)
-    sudo apt install docker-compose
-- (Opțional) [kubectl](https://kubernetes.io/docs/tasks/tools/) — pentru rulare în Kubernetes
-- (Opțional) acces la un cluster Kubernetes (local: Minikube, Kind, sau remote)
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) — pentru rulare în Kubernetes (opțional)
+- Un cluster Kubernetes local (ex: Minikube, Kind) sau remote (opțional)
 
-## Configurare variabile de mediu
+## Configurare
 
-În docker-compose.yaml și manifestul Kubernetes, poți configura intervale și directoare prin variabilele de mediu:
+### Variabile de mediu
+
+Poți personaliza comportamentul serviciilor prin variabile de mediu, atât în Docker Compose, cât și în Kubernetes:
 
 | Variabilă        | Serviciu   | Descriere                                 | Exemplu        |
 |------------------|------------|-------------------------------------------|----------------|
@@ -20,11 +24,15 @@ Proiectul "Platforma monitorizare" contine doua servicii Docker:
 | `BACKUP_INTERVAL`| backup     | Intervalul de backup (secunde)            | `5`            |
 | `BACKUP_DIR`     | backup     | Directorul unde se salvează backup-ul     | `/data/backup` |
 
-## Volume partajate
+### Volume partajate
 
-Atât în Docker Compose, cât și în Kubernetes, serviciile folosesc un volum partajat numit shared-data montat pe /data, pentru a permite schimbul de date între containere.
+Ambele servicii folosesc un volum partajat montat în `/data`, pentru a permite schimbul de fișiere (`system-state.log`) între containere.
 
-## Instrucțiuni de pornire locală cu Docker Compose (rulati instructiunile din directorul radacina al proiectului)
+
+## Rulare locală cu Docker Compose
+
+> Execută aceste comenzi din directorul **rădăcină al proiectului**
+
 1. Clonarea proiectului
     git clone https://github.com/VVovnenciuc/platforma-monitorizare.git
     cd platforma-monitorizare
@@ -57,28 +65,46 @@ Pentru a folosi imaginile în Kubernetes sau în alte medii, este recomandat să
     docker-compose -f docker/docker-compose.yaml build
 
 3. Etichetarea imaginilor 
-    docker tag docker_monitoring dockerhubuser/monitoring_image:latest
-    docker tag pdocker_backup dockerhubuser/backup_image:latest
-    (înlocuiește dockerhubuser cu username-ul propriu de Docker Hub)
+    docker tag monitoring_image:latest dockerhubuser/monitoring_image:latest
+    docker tag backup_image:latest dockerhubuser/backup_image:latest
+
+    !!! Înlocuiește dockerhubuser cu numele tău de utilizator Docker Hub. Si in instructiunile urmatoare unde gasesti dockerhubuser.
 
 4. Publicarea imaginilor
     docker push dockerhubuser/monitoring_image:latest
     docker push dockerhubuser/backup_image:latest
 
-## Pornirea aplicației în Kubernetes
+## Rularea în Kubernetes
 
-1. Actualizează manifestul Kubernetes k8s/deployment.yaml cu numele imaginilor tale (din Docker Hub)
+> Asigură-te că imaginile sunt publicate în Docker Hub sau accesibile de către cluster
+
+1. Actualizează manifestul Kubernetes k8s/02-deployment.yaml cu numele imaginilor tale (din Docker Hub)
     image: dockerhubuser/monitoring_image:latest
     image: dockerhubuser/backup_image:latest
 
-2. Aplică manifestul
-    kubectl apply -f k8s/deployment.yaml
+2. Aplică toate manifestele
+    kubectl apply -f k8s/
 
-3. Verifică starea pod-urilor
-    kubectl get pods
+3. Verifică aplicația:
+    kubectl get all -n monitoring
 
-4. Pentru vizualizarea log-urilor pod-urilor
-    kubectl logs <nume-pod> -c monitoring
-    kubectl logs <nume-pod> -c backup
+    sau separat:
+    kubectl get ns
+    kubectl get hpa -n monitoring
+    kubectl get pods -n monitoring
+    kubectl get svc -n monitoring
 
+4. Testează accesul la nginx:
+    kubectl port-forward svc/nginx-service 8080:80 -n monitoring
+
+5.  Apoi deschide browserul la:
+    http://localhost:8080
+
+6. Verifică logurile aplicației:
+    kubectl logs <nume-pod> -c monitoring -n monitoring
+    kubectl logs <nume-pod> -c backup -n monitoring
+    kubectl logs <nume-pod> -c nginx -n monitoring
+
+    !!! Înlocuiește <nume-pod> cu numele podului. Pentru a afla numele podurilor executa:
+    kubectl get pods -n monitoring
 
