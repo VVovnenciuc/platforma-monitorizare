@@ -24,6 +24,13 @@ spec:
           env:
             - name: INTERVAL
               value: "5"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi
           volumeMounts:
             - name: shared-data
               mountPath: /data
@@ -35,6 +42,13 @@ spec:
               value: "5"
             - name: BACKUP_DIR
               value: "/data/backup"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi              
           volumeMounts:
             - name: shared-data
               mountPath: /data
@@ -46,11 +60,23 @@ spec:
           volumeMounts:
             - name: shared-data
               mountPath: /usr/share/nginx/html/logs
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 200m
+              memory: 256Mi            
           command: ["/bin/sh", "-c"]
           args:
             - |
-              ln -sf /usr/share/nginx/html/logs/system-state.log /usr/share/nginx/html/index.html
-              nginx -g 'daemon off;' 
+              while true; do
+                echo '<html><body><pre>' > /usr/share/nginx/html/index.html
+                cat /usr/share/nginx/html/logs/system-state.log >> /usr/share/nginx/html/index.html
+                echo '</pre></body></html>' >> /usr/share/nginx/html/index.html
+                sleep 5
+              done &
+              nginx -g 'daemon off;'
       volumes:
         - name: shared-data
           emptyDir: {}

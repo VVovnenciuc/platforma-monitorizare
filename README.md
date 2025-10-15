@@ -81,11 +81,13 @@ Pentru a folosi imaginile în Kubernetes sau în alte medii, este recomandat să
 1. Actualizează manifestul Kubernetes k8s/02-deployment.yaml cu numele imaginilor tale (din Docker Hub)
     image: dockerhubuser/monitoring_image:latest
     image: dockerhubuser/backup_image:latest
+2. Porneste minikube:
+    minikube start
 
-2. Aplică toate manifestele
+3. Aplică toate manifestele
     kubectl apply -f k8s/
 
-3. Verifică aplicația:
+4. Verifică aplicația:
     kubectl get all -n monitoring
 
     sau separat:
@@ -94,13 +96,13 @@ Pentru a folosi imaginile în Kubernetes sau în alte medii, este recomandat să
     kubectl get pods -n monitoring
     kubectl get svc -n monitoring
 
-4. Testează accesul la nginx:
+5. Testează accesul la nginx:
     kubectl port-forward svc/nginx-service 8080:80 -n monitoring
 
-5.  Apoi deschide browserul la:
+6.  Apoi deschide browserul la:
     http://localhost:8080
 
-6. Verifică logurile aplicației:
+7. Verifică logurile aplicației:
     kubectl logs <nume-pod> -c monitoring -n monitoring
     kubectl logs <nume-pod> -c backup -n monitoring
     kubectl logs <nume-pod> -c nginx -n monitoring
