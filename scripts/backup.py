@@ -1,3 +1,9 @@
+"""
+Script de backup automat pentru fișierul system-state.log.
+Monitorizează modificările fișierului și creează copii
+cu timestamp în BACKUP_DIR.
+"""
+
 import os
 import time
 import hashlib
@@ -9,19 +15,23 @@ from logging.handlers import RotatingFileHandler
 
 
 # ===== Configurări din variabile de mediu =====
-BACKUP_INTERVAL = int(os.getenv("BACKUP_INTERVAL", 5))  # secunde
+BACKUP_INTERVAL = int(os.getenv("BACKUP_INTERVAL", "5"))  # secunde
 BACKUP_DIR = os.getenv("BACKUP_DIR", "backup")
 LOG_FILE = "/data/system-state.log"
-LOG_FILENAME = 'backup.log'
+LOG_FILENAME = "backup.log"
 
-# ===== Configurare logging: consolă + fișier =====
-logger = logging.getLogger()
+# ===== Configurare logging =====
+logger = logging.getLogger("backup_logger")
 logger.setLevel(logging.INFO)
 
-formatter = logging.Formatter('[%(levelname)s] %(asctime)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+formatter = logging.Formatter(
+    "[%(levelname)s] %(asctime)s - %(message)s",
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 
 console_handler = logging.StreamHandler(sys.stdout)
 console_handler.setFormatter(formatter)
+
 
 # ===== RotatingFileHandler pentru log =====
 rotating_handler = RotatingFileHandler(
@@ -32,32 +42,57 @@ if not logger.hasHandlers():
     logger.addHandler(console_handler)
     logger.addHandler(rotating_handler)
 
-# ===== Asigură că directorul de backup există =====
+
+# ===== Asigură existența directorului de backup =====
 if not os.path.exists(BACKUP_DIR):
     try:
         os.makedirs(BACKUP_DIR)
-        logger.info(f"Directorul de backup a fost creat: {BACKUP_DIR}")
-    except Exception as e:
-        logger.error(f"Nu s-a putut crea directorul de backup: {e}")
+        logger.info("Directorul de backup a fost creat: %s", BACKUP_DIR)
+    except OSError as e:
+        logger.error("Nu s-a putut crea directorul de backup: %s", e)
         BACKUP_DIR = "."  # fallback: backup în directorul curent
-        logger.info(f"Backup-ul va fi făcut în directorul curent: {BACKUP_DIR}")
+        logger.info(
+            "Backup-ul va fi făcut în directorul curent: %s", BACKUP_DIR
+        )
 
-# ===== Funcție pentru calcul hash (pentru a detecta modificări) =====
-def file_hash(path):
+
+# ===== Funcții =====
+def file_hash(path: str) -> str | None:
+    """Calculează hash-ul MD5 al fișierului.
+    Returnează None dacă fișierul nu există.
+    """
     try:
-        with open(path, "rb") as f:
-            return hashlib.md5(f.read()).hexdigest()
+        with open(path, "rb") as file_obj:
+            return hashlib.md5(file_obj.read()).hexdigest()
     except FileNotFoundError:
         return None
-    except Exception as e:
-        logger.error(f"Nu s-a putut calcula hash-ul fișierului: {e}")
+    except OSError as err:
+        logger.error(
+            "Nu s-a putut calcula hash-ul fișierului: %s: %s", path, err
+        )
         return None
 
-# ===== Main loop =====
-def main():
-    logger.info(f"Pornit backup monitor pentru {LOG_FILE}")
-    logger.info(f"Interval backup: {BACKUP_INTERVAL} secunde")
-    logger.info(f"Director backup: {BACKUP_DIR}")
+
+def backup_file(src_path: str, dest_dir: str) -> None:
+    """Copiază fișierul sursă în directorul de backup cu timestamp."""
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_name = f"system-state_{timestamp}.log"
+    backup_path = os.path.join(dest_dir, backup_name)
+    try:
+        shutil.copy2(src_path, backup_path)
+        logger.info("Backup efectuat: %s", backup_path)
+    except OSError as err2:
+        logger.error("Eroare la salvarea backup-ului: %s", err2)
+
+
+# ===== Loop principal =====
+def main() -> None:
+    """
+    Rulează bucla principală de monitorizare și backup al fișierului LOG_FILE.
+    """
+    logger.info("Pornit backup monitor pentru %s", LOG_FILE)
+    logger.info("Interval backup: %d secunde", BACKUP_INTERVAL)
+    logger.info("Director backup: %s", BACKUP_DIR)
 
     last_hash = file_hash(LOG_FILE)
 
@@ -68,32 +103,25 @@ def main():
             current_hash = file_hash(LOG_FILE)
 
             if current_hash is None:
-                logger.warning(f"Fișierul {LOG_FILE} nu există sau nu poate fi citit.")
-                # optional: last_hash = None
+                logger.warning(
+                    "Fișierul %s nu există sau nu poate fi citit.", LOG_FILE
+                )
                 continue
 
             if current_hash != last_hash:
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                backup_name = f"system-state_{timestamp}.log"
-                backup_path = os.path.join(BACKUP_DIR, backup_name)
-
-                try:
-                    shutil.copy2(LOG_FILE, backup_path)
-                    logger.info(f"Backup efectuat: {backup_path}")
-                    last_hash = current_hash
-                except Exception as e:
-                    logger.error(f"Eroare la salvarea backup-ului: {e}")
+                backup_file(LOG_FILE, BACKUP_DIR)
+                last_hash = current_hash
             else:
-                logger.info(f"Nicio modificare în {LOG_FILE}, nu se face backup.")
+                logger.info(
+                    "Nicio modificare în %s, nu se face backup.", LOG_FILE
+                )
 
-        except Exception as e:
-            logger.error(f"Eroare neașteptată în bucla principală: {e}")
+        except KeyboardInterrupt:
+            logger.info("Script oprit de utilizator.")
+            break
+        except OSError as err3:
+            logger.error("Eroare neașteptată în bucla principală: %s", err3)
 
-# ===== Rulează scriptul =====
+
 if __name__ == "__main__":
-    try:
-        main()
-    except KeyboardInterrupt:
-        logger.info("Script oprit de utilizator.")
-    except Exception as e:
-        logger.critical(f"Scriptul a întâmpinat o eroare critică: {e}")
+    main()

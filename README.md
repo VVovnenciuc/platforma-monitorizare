@@ -110,3 +110,27 @@ Pentru a folosi imaginile în Kubernetes sau în alte medii, este recomandat să
     !!! Înlocuiește <nume-pod> cu numele podului. Pentru a afla numele podurilor executa:
     kubectl get pods -n monitoring
 
+
+
+Recomandari verificare cod:
+Script bash:
+    bash -n scripts/monitoring.sh   # pentru a testa dacă scriptul are erori de sintaxă
+    bash -x scripts/monitoring.sh   # pentru debug, util dacă scriptul se blochează sau nu produce rezultatul așteptat
+    
+Script python:
+    python3 -m py_compile scripts/backup.py
+    pylint scripts/backup.py
+    flake8 scripts/backup.py   # găsește probleme stil/bug-uri
+    black scripts/backup.py    # reformatează automat codul
+    flake8 scripts/backup.py   # verifică din nou eventualele probleme rămase
+    python3 scripts/backup.py --dry-run
+
+Verificarea fisierelor yaml pentru erori (yamllint) si bune practici Ansible (ansible-lint):
+    yamllint docker/docker-compose.yaml
+    yamllint ansible/playbooks/deploy_platform.yaml
+    yamllint ansible/playbooks/install_docker.yaml
+    ansible-lint ansible/playbooks/deploy_platform.yaml
+    ansible-lint ansible/playbooks/install_docker.yaml
+
+Dry run fără a porni containerele complet:
+    docker-compose -f docker/docker-compose.yaml up --no-start

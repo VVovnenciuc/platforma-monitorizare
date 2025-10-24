@@ -1,0 +1,29 @@
+# ===== Python =====
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+*.egg
+
+# ===== Logs și backup-uri =====
+*.log
+backup/
+system-state_*.log
+
+# ===== Docker =====
+docker/docker-compose.override.yml
+docker/.env
+
+# ===== Ansible =====
+*.retry
+*.vault
+inventory.ini
+ansible/playbooks/*.yaml~   # fișiere temporare editoare
+ansible/playbooks/*.retry
+
+# ===== IDE și OS =====
+.DS_Store
+.idea/
+.vscode/
+*.swp

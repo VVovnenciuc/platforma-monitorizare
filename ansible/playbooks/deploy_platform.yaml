@@ -1,0 +1,27 @@
+---
+- name: Deploy monitoring and backup services
+  hosts: app1
+  become: true
+  vars:
+    git_repo_url: "https://github.com/VVovnenciuc/platforma-monitorizare.git"
+    project_dir: "/home/{{ ansible_user }}/platforma-monitorizare"
+
+  tasks:
+    - name: Ensure Git is installed
+      ansible.builtin.apt:
+        name: git
+        state: present
+        update_cache: true
+
+    - name: Clone the platforma-monitorizare repository
+      ansible.builtin.git:
+        repo: "{{ git_repo_url }}"
+        dest: "{{ project_dir }}"
+        version: main
+        update: true
+
+    - name: Deploy services using Docker Compose v2
+      community.docker.docker_compose_v2:
+        project_src: "{{ project_dir }}/docker"
+        state: present
+        remove_orphans: true
