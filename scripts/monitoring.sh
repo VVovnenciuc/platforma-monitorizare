@@ -2,7 +2,7 @@
 set -euo pipefail
 
 INTERVAL=${INTERVAL:-5}
-LOG_FILE="system-state.log"
+LOG_FILE="/data/system-state.log"
 
 if ! touch "$LOG_FILE" 2>/dev/null; then
   echo "Eroare: Nu se poate scrie în $LOG_FILE" >&2; exit 1
