@@ -1,1 +1,58 @@
-# Pipeline Jenkins pentru CI/CD al scriptului python de backup.
+pipeline {
+  agent any
+
+  environment {
+    DOCKER_IMAGE = "vvovnenciuc/backup_image:latest"
+    PROJECT_DIR = "${WORKSPACE}"
+  }
+
+  parameters {
+    string(name: 'DOCKER_TAG', defaultValue: 'latest', description: 'Tag pentru imaginea Docker')
+  }
+
+  stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+      }
+    }
+
+    stage('Python Lint') {
+      steps {
+        sh '''
+          python3 -m pip install --user flake8 || true
+          ~/.local/bin/flake8 --version || true
+          ~/.local/bin/flake8 scripts
+        '''
+      }
+    }
+
+    stage('Build Docker Image') {
+      steps {
+        sh "docker build -t ${DOCKER_IMAGE} -f docker/backup/Dockerfile ."
+      }
+    }
+
+    stage('Docker Login & Push') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'credentials-dockerhub-id', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
+          sh '''
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+            docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USER}/backup_image:${params.DOCKER_TAG}
+            docker push ${DOCKERHUB_USER}/backup_image:${params.DOCKER_TAG}
+            docker logout
+          '''
+        }
+      }
+    }
+
+
+  post {
+    success {
+      echo "backup pipeline finished successfully"
+    }
+    failure {
+      echo "backup pipeline failed"
+    }
+  }
+}
