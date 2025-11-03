@@ -11,6 +11,12 @@ pipeline {
   }
 
   stages {
+    stage('Checkout') {
+      steps {
+        checkout scm
+        }
+    }
+
     stage('Python Lint') {
       steps {
         sh '''
