@@ -8,8 +8,6 @@ __pycache__/
 
 # ===== Logs și backup-uri =====
 *.log
-backup/
-!backup/Jenkinsfile
 system-state_*.log
 
 # ===== Docker =====
