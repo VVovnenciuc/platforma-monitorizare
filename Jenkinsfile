@@ -34,6 +34,7 @@ pipeline {
                 docker {
                     image 'python:3.11'
                     reuseNode true
+                    args '-u root'
                 }
             }
             steps {
@@ -49,6 +50,7 @@ pipeline {
                 docker {
                     image 'python:3.11'
                     reuseNode true
+                    args '-u root'
                 }
             }
             steps {
