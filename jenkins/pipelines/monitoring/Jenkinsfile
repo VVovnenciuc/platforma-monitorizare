@@ -41,7 +41,7 @@ pipeline {
             steps {
                 script {
                     sh """
-                        docker build -t ${DOCKER_IMAGE} -f jenkins/pipelines/monitoring/Dockerfile .
+                        docker build -t ${DOCKER_IMAGE} -f docker/monitoring/Dockerfile .
                     """
                 }
             }
