@@ -57,8 +57,15 @@ pipeline {
                     script {
                         sh """
                             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+
+                            # Tag și push cu hash-ul commit-ului
                             docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USER}/monitoring_image:${GIT_COMMIT_HASH}
                             docker push ${DOCKERHUB_USER}/monitoring_image:${GIT_COMMIT_HASH}
+
+                            # Tag și push ca latest
+                            docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USER}/monitoring_image:latest
+                            docker push ${DOCKERHUB_USER}/monitoring_image:latest
+
                             docker logout
                         """
                     }
