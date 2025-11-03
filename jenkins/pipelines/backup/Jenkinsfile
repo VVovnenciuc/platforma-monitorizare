@@ -1,64 +1,72 @@
 pipeline {
-  agent any
+    agent any
 
-  environment {
-    DOCKER_IMAGE = "vvovnenciuc/backup_image:latest"
-    PROJECT_DIR = "${WORKSPACE}"
-  }
+    environment {
+        DOCKER_IMAGE = "vvovnenciuc/backup_image:latest"
+        PROJECT_DIR = "${WORKSPACE}"
+        DOCKER_TAG = "${params.DOCKER_TAG}"
+    }
 
-  parameters {
-    string(name: 'DOCKER_TAG', defaultValue: 'latest', description: 'Tag pentru imaginea Docker')
-  }
+    parameters {
+        string(name: 'DOCKER_TAG', defaultValue: 'latest', description: 'Tag pentru imaginea Docker')
+    }
 
-  stages {
-    stage('Checkout') {
-      steps {
-        checkout scm
+    stages {
+        stage('Checkout') {
+            steps {
+                git url: 'https://github.com/VVovnenciuc/platforma-monitorizare.git', branch: 'main'
+            }
+        }
+
+        stage('Python Lint') {
+            agent {
+                docker {
+                    image 'python:3.11'
+                    reuseNode true
+                }
+            }
+            steps {
+                sh '''
+                    pip install flake8
+                    flake8 scripts
+                '''
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t ${DOCKER_IMAGE} -f docker/backup/Dockerfile ."
+            }
+        }
+
+        stage('Docker Login & Push') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'credentials-dockerhub-id', 
+                    usernameVariable: 'DOCKERHUB_USER', 
+                    passwordVariable: 'DOCKERHUB_PASS'
+                )]) {
+                    // folosim script block și triple quotes pentru a evita problemele cu sh
+                    script {
+                        sh """
+                            #!/bin/bash
+                            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                            docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USER}/backup_image:${DOCKER_TAG}
+                            docker push ${DOCKERHUB_USER}/backup_image:${DOCKER_TAG}
+                            docker logout
+                        """
+                    }
+                }
+            }
         }
     }
 
-    stage('Python Lint') {
-      steps {
-        sh '''
-          # Verificăm dacă flake8 e instalat, dacă nu îl instalăm
-          if ! command -v flake8 &> /dev/null
-          then
-              echo "Instalăm flake8..."
-              pip3 install --break-system-packages flake8
-          fi
-
-          # Rulăm lint
-          flake8 scripts
-        '''
-      }
-    }
-
-    stage('Build Docker Image') {
-      steps {
-        sh "docker build -t ${DOCKER_IMAGE} -f docker/backup/Dockerfile ."
-      }
-    }
-
-    stage('Docker Login & Push') {
-      steps {
-        withCredentials([usernamePassword(credentialsId: 'credentials-dockerhub-id', usernameVariable: 'DOCKERHUB_USER', passwordVariable: 'DOCKERHUB_PASS')]) {
-          sh '''
-            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-            docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USER}/backup_image:${params.DOCKER_TAG}
-            docker push ${DOCKERHUB_USER}/backup_image:${params.DOCKER_TAG}
-            docker logout
-          '''
+    post {
+        success {
+            echo "backup pipeline finished successfully"
         }
-      }
+        failure {
+            echo "backup pipeline failed"
+        }
     }
-  }
-
-  post {
-    success {
-      echo "backup pipeline finished successfully"
-    }
-    failure {
-      echo "backup pipeline failed"
-    }
-  }
 }
