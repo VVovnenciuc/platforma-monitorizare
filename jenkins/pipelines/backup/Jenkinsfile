@@ -13,23 +13,23 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        //checkout scm
         git url: 'https://github.com/VVovnenciuc/platforma-monitorizare.git', branch: 'main'
       }
     }
 
     stage('Python Lint') {
-      agent {
-          docker {
-              image 'python:3.11'
-              reuseNode true
-          }
-      }
       steps {
-          sh '''
-              pip install flake8
-              flake8 scripts
-          '''
+        sh '''
+          # Verificăm dacă flake8 e instalat, dacă nu îl instalăm
+          if ! command -v flake8 &> /dev/null
+          then
+              echo "Instalăm flake8..."
+              pip3 install --break-system-packages flake8
+          fi
+
+          # Rulăm lint
+          flake8 scripts
+        '''
       }
     }
 
