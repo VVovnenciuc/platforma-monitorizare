@@ -12,14 +12,14 @@ pipeline {
         stage('Checkout') {
             steps {
                 checkout([
-                  $class: 'GitSCM',
-                  branches: [[name: '*/main']],
-                  userRemoteConfigs: [[url: 'https://github.com/VVovnenciuc/platforma-monitorizare.git']],
-                  extensions: [[$class: 'CleanBeforeCheckout']]
-            ])
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[url: 'https://github.com/VVovnenciuc/platforma-monitorizare.git']],
+                    extensions: [[$class: 'CleanBeforeCheckout']]
+                ])
             }
         }
-        
+
         stage('Get Commit Hash') {
             steps {
                 script {
@@ -28,7 +28,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Python Lint') {
             agent {
                 docker {
@@ -44,7 +44,7 @@ pipeline {
                 '''
             }
         }
-        
+
         stage('Run Tests') {
             agent {
                 docker {
@@ -60,13 +60,13 @@ pipeline {
                 '''
             }
         }
-        
+
         stage('Build Docker Image') {
             steps {
                 sh "docker build -t ${DOCKER_IMAGE} -f docker/backup/Dockerfile ."
             }
         }
-        
+
         stage('Docker Login & Push') {
             steps {
                 withCredentials([usernamePassword(
@@ -74,7 +74,6 @@ pipeline {
                     usernameVariable: 'DOCKERHUB_USER', 
                     passwordVariable: 'DOCKERHUB_PASS'
                 )]) {
-                    // folosim script block și triple quotes pentru a evita problemele cu sh
                     script {
                         sh '''
                             #!/bin/bash
@@ -85,9 +84,9 @@ pipeline {
                             docker push ${DOCKERHUB_USER}/backup_image:${GIT_COMMIT_HASH}
 
                             # Tag și push ca latest
-                            docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USER}/monitoring_image:latest
-                            docker push ${DOCKERHUB_USER}/monitoring_image:latest
-                            
+                            docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USER}/backup_image:latest
+                            docker push ${DOCKERHUB_USER}/backup_image:latest
+
                             docker logout
                         '''
                     }
