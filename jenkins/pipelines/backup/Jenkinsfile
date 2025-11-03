@@ -79,8 +79,15 @@ pipeline {
                         sh '''
                             #!/bin/bash
                             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+
+                            # Tag și push cu hash-ul commit-ului
                             docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USER}/backup_image:${GIT_COMMIT_HASH}
                             docker push ${DOCKERHUB_USER}/backup_image:${GIT_COMMIT_HASH}
+
+                            # Tag și push ca latest
+                            docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USER}/monitoring_image:latest
+                            docker push ${DOCKERHUB_USER}/monitoring_image:latest
+                            
                             docker logout
                         '''
                     }
@@ -90,10 +97,10 @@ pipeline {
     }
     post {
         success {
-            echo "backup pipeline finished successfully"
+            echo "Backup pipeline finished successfully"
         }
         failure {
-            echo "backup pipeline failed"
+            echo "Backup pipeline failed"
         }
         always {
             cleanWs()

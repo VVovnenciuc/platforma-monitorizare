@@ -1,1 +1,81 @@
-# Pipeline Jenkins pentru CI/CD al scriptului Python.
+pipeline {
+    agent any
+    environment {
+        DOCKER_IMAGE = "vvovnenciuc/monitoring_image:latest"
+        PROJECT_DIR = "${WORKSPACE}"
+        DOCKER_TAG = "${params.DOCKER_TAG}"
+    }
+
+    parameters {
+        string(name: 'DOCKER_TAG', defaultValue: 'latest', description: 'Tag pentru imaginea Docker')
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    userRemoteConfigs: [[url: 'https://github.com/VVovnenciuc/platforma-monitorizare.git']],
+                    extensions: [[$class: 'CleanBeforeCheckout']]
+                ])
+            }
+        }
+
+        stage('Get Commit Hash') {
+            steps {
+                script {
+                    env.GIT_COMMIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    echo "Git commit hash: ${env.GIT_COMMIT_HASH}"
+                }
+            }
+        }
+
+        stage('Bash Lint') {
+            steps {
+                sh 'bash -n scripts/monitoring.sh'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh """
+                        docker build -t ${DOCKER_IMAGE} -f jenkins/pipelines/monitoring/Dockerfile .
+                    """
+                }
+            }
+        }
+
+        stage('Docker Login & Push') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'credentials-dockerhub-id',
+                    usernameVariable: 'DOCKERHUB_USER',
+                    passwordVariable: 'DOCKERHUB_PASS'
+                )]) {
+                    script {
+                        sh """
+                            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
+                            docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USER}/monitoring_image:${GIT_COMMIT_HASH}
+                            docker push ${DOCKERHUB_USER}/monitoring_image:${GIT_COMMIT_HASH}
+                            docker logout
+                        """
+                    }
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Monitoring pipeline finished successfully."
+        }
+        failure {
+            echo "Monitoring pipeline failed."
+        }
+        always {
+            cleanWs()
+        }        
+    }
+}

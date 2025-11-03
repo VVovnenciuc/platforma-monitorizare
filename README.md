@@ -68,7 +68,7 @@ Pentru a folosi imaginile în Kubernetes sau în alte medii, este recomandat să
     docker tag monitoring_image:latest dockerhubuser/monitoring_image:latest
     docker tag backup_image:latest dockerhubuser/backup_image:latest
 
-    !!! Înlocuiește dockerhubuser cu numele tău de utilizator Docker Hub. Si in instructiunile urmatoare unde gasesti dockerhubuser.
+    !!! Înlocuiește dockerhubuser cu numele tău de utilizator Docker Hub. 
 
 4. Publicarea imaginilor
     docker push dockerhubuser/monitoring_image:latest
