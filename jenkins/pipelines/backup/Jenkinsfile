@@ -20,9 +20,10 @@ pipeline {
     stage('Python Lint') {
       steps {
         sh '''
-          python3 -m pip install --user flake8 || true
-          ~/.local/bin/flake8 --version || true
-          ~/.local/bin/flake8 scripts
+          python3 -m venv venv
+          . venv/bin/activate
+          pip install flake8
+          venv/bin/flake8 scripts
         '''
       }
     }
