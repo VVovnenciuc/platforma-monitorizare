@@ -45,7 +45,7 @@ pipeline {
         }
       }
     }
-
+  }
 
   post {
     success {
@@ -54,6 +54,5 @@ pipeline {
     failure {
       echo "backup pipeline failed"
     }
-  }
   }
 }
