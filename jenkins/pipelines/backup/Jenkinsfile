@@ -1,16 +1,13 @@
 pipeline {
     agent any
-
     environment {
         DOCKER_IMAGE = "vvovnenciuc/backup_image:latest"
         PROJECT_DIR = "${WORKSPACE}"
         DOCKER_TAG = "${params.DOCKER_TAG}"
     }
-
     parameters {
         string(name: 'DOCKER_TAG', defaultValue: 'latest', description: 'Tag pentru imaginea Docker')
     }
-
     stages {
         stage('Checkout') {
             steps {
@@ -22,7 +19,16 @@ pipeline {
             ])
             }
         }
-
+        
+        stage('Get Commit Hash') {
+            steps {
+                script {
+                    env.GIT_COMMIT_HASH = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+                    echo "Git commit hash: ${env.GIT_COMMIT_HASH}"
+                }
+            }
+        }
+        
         stage('Python Lint') {
             agent {
                 docker {
@@ -37,13 +43,28 @@ pipeline {
                 '''
             }
         }
-
+        
+        stage('Run Tests') {
+            agent {
+                docker {
+                    image 'python:3.11'
+                    reuseNode true
+                }
+            }
+            steps {
+                sh '''
+                    pip install pytest
+                    pytest -v --maxfail=1 --disable-warnings
+                '''
+            }
+        }
+        
         stage('Build Docker Image') {
             steps {
                 sh "docker build -t ${DOCKER_IMAGE} -f docker/backup/Dockerfile ."
             }
         }
-
+        
         stage('Docker Login & Push') {
             steps {
                 withCredentials([usernamePassword(
@@ -53,25 +74,27 @@ pipeline {
                 )]) {
                     // folosim script block și triple quotes pentru a evita problemele cu sh
                     script {
-                        sh """
+                        sh '''
                             #!/bin/bash
                             echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USER" --password-stdin
-                            docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USER}/backup_image:${DOCKER_TAG}
-                            docker push ${DOCKERHUB_USER}/backup_image:${DOCKER_TAG}
+                            docker tag ${DOCKER_IMAGE} ${DOCKERHUB_USER}/backup_image:${GIT_COMMIT_HASH}
+                            docker push ${DOCKERHUB_USER}/backup_image:${GIT_COMMIT_HASH}
                             docker logout
-                        """
+                        '''
                     }
                 }
             }
         }
     }
-
     post {
         success {
             echo "backup pipeline finished successfully"
         }
         failure {
             echo "backup pipeline failed"
+        }
+        always {
+            cleanWs()
         }
     }
 }
