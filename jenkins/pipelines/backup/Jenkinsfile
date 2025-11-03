@@ -18,13 +18,17 @@ pipeline {
     }
 
     stage('Python Lint') {
+      agent {
+          docker {
+              image 'python:3.11'
+              reuseNode true
+          }
+      }
       steps {
-        sh '''
-          python3 -m venv venv
-          . venv/bin/activate
-          pip install flake8
-          venv/bin/flake8 scripts
-        '''
+          sh '''
+              pip install flake8
+              flake8 scripts
+          '''
       }
     }
 
