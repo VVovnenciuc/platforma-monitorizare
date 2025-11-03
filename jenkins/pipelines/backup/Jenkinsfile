@@ -11,12 +11,6 @@ pipeline {
   }
 
   stages {
-    stage('Checkout') {
-      steps {
-        git url: 'https://github.com/VVovnenciuc/platforma-monitorizare.git', branch: 'main'
-      }
-    }
-
     stage('Python Lint') {
       steps {
         sh '''
