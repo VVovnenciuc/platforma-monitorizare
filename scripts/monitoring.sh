@@ -48,7 +48,7 @@ while :; do
   print_section "Logged-in Users"  "$(who 2>/dev/null | wc -l || echo N/A)"
   print_section "Primary IP"       "$(hostname -I 2>/dev/null | awk '{print $1}' || echo N/A)"
 
-  # === NETWORK INTERFACES – FIXAT 100% ===
+  # === NETWORK INTERFACES ===
 
   echo
   echo "┌─ Network Interfaces (RX/TX bytes)"
@@ -105,7 +105,7 @@ while :; do
     print_section "  Status" "N/A (docker not installed)"
   fi
 
-  # === KUBERNETES PODS – FIXAT ===
+  # === KUBERNETES PODS ===
   echo
   if command -v kubectl >/dev/null 2>&1; then
     echo "┌─ Kubernetes Pods"
