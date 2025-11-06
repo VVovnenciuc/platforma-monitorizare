@@ -1,0 +1,111 @@
+Documentație:Terraform cu LocalStack
+🔹 1. Obiectiv
+
+Este folosit pentru crearea infrastructurii necesare rulării unei aplicații simple, folosind Terraform și simularea serviciilor AWS prin LocalStack.
+
+Infrastructura include:
+
+un bucket S3 pentru stocarea datelor proiectului;
+
+o cheie SSH;
+o instanță EC2;
+salvarea fișierului de stare Terraform într-un bucket S3.
+
+🔹 2. Structura proiectului
+terraform/
+├── backend.tf      # Configurare backend S3 pentru stocarea stării
+├── main.tf         # Provider AWS + resursele EC2, S3, SSH key
+
+🔹 3. Configurarea backend-ului S3 (backend.tf)
+terraform {
+  backend "s3" {
+    bucket = "tf-state-bucket"
+    key    = "terraform.tfstate"
+    region = "us-east-1"
+
+    endpoints = {
+      s3 = "http://localhost:4566"
+    }
+
+    access_key                  = "test"
+    secret_key                  = "test"
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    use_path_style              = true
+  }
+}
+
+
+➡️ Fișierul de stare Terraform este salvat în bucket-ul tf-state-bucket din LocalStack.
+Bucket-ul a fost creat manual folosind:
+
+aws --endpoint-url=http://localhost:4566 s3 mb s3://tf-state-bucket
+
+🔹 4. Configurarea providerului și resurselor (main.tf)
+provider "aws" {
+  region                      = "eu-central-1"
+  access_key                  = "test"
+  secret_key                  = "test"
+  skip_credentials_validation = true
+  skip_requesting_account_id  = true
+  skip_metadata_api_check     = true
+  s3_use_path_style           = true
+
+  endpoints {
+    ec2 = "http://localhost:4566"
+    s3  = "http://localhost:4566"
+    iam = "http://localhost:4566"
+    sts = "http://localhost:4566"
+  }
+}
+
+resource "aws_s3_bucket" "project_bucket" {
+  bucket = "tf-project-bucket"
+}
+
+resource "aws_key_pair" "deploy_key" {
+  key_name   = "local-dev-key"
+  public_key = file("~/.ssh/id_rsa.pub")
+}
+
+resource "aws_instance" "app" {
+  ami           = "ami-12345678"
+  instance_type = "t2.micro"
+  key_name      = aws_key_pair.deploy_key.key_name
+}
+
+
+
+🔹 5. Inițializare și rulare Terraform
+
+Pași executați:
+
+cd ~/platforma-monitorizare/terraform
+
+aws configure       # Configurare aws
+    AWS Access Key ID [None]:       test
+    AWS Secret Access Key [None]:   test
+    Default region name [None]:     us-east-1
+    Default output format [None]:   json
+
+aws --endpoint-url=http://localhost:4566 s3 mb s3://tf-state-bucket  # Creare s3 bucket
+
+aws --endpoint-url=http://localhost:4566 s3 ls                       # Verificare ca s3 s-a creat
+
+rm -rf .terraform .terraform.lock.hcl       # Resetare configurare Terraform
+terraform init -reconfigure                 # Inițializare cu backend S3
+terraform plan                              # Verificare plan
+terraform apply -auto-approve               # Creare infrastructură
+
+🔹 6. Verificarea resurselor create:
+
+aws --endpoint-url=http://localhost:4566 s3 ls
+aws --endpoint-url=http://localhost:4566 ec2 describe-instances
+aws --endpoint-url=http://localhost:4566 ec2 describe-key-pairs
+
+Explicație: EC2 și Key Pair sunt mocked în LocalStack, deci AWS CLI nu le arată. Terraform însă le consideră create, fiind suficiente pentru test local și documentare.
+
+Verificare state Terraform
+    terraform state list
+Arată că Terraform știe că resursele există, chiar dacă CLI LocalStack nu le afișează.
+
