@@ -12,9 +12,11 @@ services:
       - /proc:/host/proc:ro           # acces la proc gazdă
       - /sys:/host/sys:ro             # senzori hardware
       - /etc:/host/etc:ro             # versiune OS
+      - /usr/lib:/host/usr/lib:ro
       - /var/run/docker.sock:/var/run/docker.sock:ro  # acces la Docker gazdă
     network_mode: "host"              # IP real al gazdei
     restart: always
+    privileged: true
 
   backup:
     build:

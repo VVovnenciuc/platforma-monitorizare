@@ -35,7 +35,7 @@ while :; do
   load=$(awk '{print $1,$2,$3}' /host/proc/loadavg 2>/dev/null || echo "N/A")
   print_section "CPU Load (1/5/15)" "$load"
 
-  # --- Memory Usage (human readable) ---
+  # --- Memory Usage ---
   echo "+-- Memory Usage"
   awk '/MemTotal/ {total=$2} /MemAvailable/ {avail=$2} END{
     used=total-avail
@@ -109,8 +109,17 @@ while :; do
 
   # --- OS Info ---
   echo
-  os=$(grep -m1 '^PRETTY_NAME=' /host/etc/os-release 2>/dev/null | cut -d'"' -f2 || echo "N/A")
-  print_section "OS Version" "$os"
+  # Detectăm fișierul OS de pe host (etc sau usr/lib)
+  HOST_OS_FILE="/host/etc/os-release"
+  [ ! -f "$HOST_OS_FILE" ] && HOST_OS_FILE="/host/usr/lib/os-release"
+  if [ -f "$HOST_OS_FILE" ]; then
+    OS_NAME=$(grep '^NAME=' "$HOST_OS_FILE" | cut -d= -f2 | tr -d '"')
+    OS_VERSION=$(grep '^VERSION=' "$HOST_OS_FILE" | cut -d= -f2 | tr -d '"')
+    OS_INFO="$OS_NAME $OS_VERSION"
+  else
+    OS_INFO="N/A"
+  fi
+  print_section "OS Version" "$OS_INFO"
 
   echo
   printf '%s\n' "+---------------------------------------------------------------+"
