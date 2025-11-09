@@ -39,20 +39,20 @@ Ambele servicii folosesc un volum partajat montat în `/data`, pentru a permite 
 Execută toate comenzile de mai jos din directorul **rădăcină al proiectului**
 
 2. Construirea și pornirea containerelor
-    docker-compose -f docker/docker-compose.yaml up --build -d
+    docker compose -f docker/docker-compose.yaml up --build -d
 
 3. Verificarea containerelor
-    docker-compose -f docker/docker-compose.yaml ps
+    docker compose -f docker/docker-compose.yaml ps
 
 4. Vizualizarea log-urilor
-    docker-compose -f docker/docker-compose.yaml logs -f
-    docker-compose -f docker/docker-compose.yaml logs -f monitoring
-    docker-compose -f docker/docker-compose.yaml logs -f backup
+    docker compose -f docker/docker-compose.yaml logs -f
+    docker compose -f docker/docker-compose.yaml logs -f monitoring
+    docker compose -f docker/docker-compose.yaml logs -f backup
 
 5. Oprirea containerelor
-    docker-compose -f docker/docker-compose.yaml down
+    docker compose -f docker/docker-compose.yaml down
     Daca doriti sa stergeti si volumele:
-    docker-compose -f docker/docker-compose.yaml down -v
+    docker compose -f docker/docker-compose.yaml down -v
 
 
 ## Construirea și publicarea imaginilor în Docker Hub
@@ -63,7 +63,7 @@ Pentru a folosi imaginile în Kubernetes sau în alte medii, este recomandat să
     docker login
 
 2. Construirea imaginilor
-    docker-compose -f docker/docker-compose.yaml build
+    docker compose -f docker/docker-compose.yaml build
 
 3. Etichetarea imaginilor 
     docker tag monitoring_image:latest dockerhubuser/monitoring_image:latest
@@ -103,7 +103,11 @@ Pentru a folosi imaginile în Kubernetes sau în alte medii, este recomandat să
 6.  Apoi deschide browserul la:
     http://localhost:8080
 
-7. Verifică logurile aplicației:
+7.  Sau acceseaza din browser fara port-forward:
+    http://<minikube-ip>:30080
+    (minikube ip  - pentru a afla ip)
+
+8. Verifică logurile aplicației:
     kubectl logs <nume-pod> -c monitoring -n monitoring
     kubectl logs <nume-pod> -c backup -n monitoring
     kubectl logs <nume-pod> -c nginx -n monitoring
@@ -111,7 +115,13 @@ Pentru a folosi imaginile în Kubernetes sau în alte medii, este recomandat să
     !!! Înlocuiește <nume-pod> cu numele podului. Pentru a afla numele podurilor executa:
     kubectl get pods -n monitoring
 
+## Rulare cu Ansible
 
+1. 
+    ansible-playbook -i ansible/inventory.ini ansible/playbooks.install_docker.yaml
+
+2. 
+    ansible-playbook -i ansible/inventory.ini ansible/playbooks/deploy_platform.yaml
 
 Recomandari verificare cod:
 Script bash:
@@ -134,4 +144,4 @@ Verificarea fisierelor yaml pentru erori (yamllint) si bune practici Ansible (an
     ansible-lint ansible/playbooks/install_docker.yaml
 
 Dry run fără a porni containerele complet:
-    docker-compose -f docker/docker-compose.yaml up --no-start
+    docker compose -f docker/docker-compose.yaml up --no-start

@@ -35,7 +35,7 @@
 
     - name: Add Docker APT repository
       ansible.builtin.apt_repository:
-        repo: "{{ docker_repo }}"
+        repo: "deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable"
         filename: docker
         state: present
 

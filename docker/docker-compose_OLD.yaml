@@ -1,3 +1,4 @@
+---
 services:
   monitoring:
     build:
@@ -8,12 +9,7 @@ services:
     environment:
       - INTERVAL=5
     volumes:
-      - ./data:/data:rw               # loguri + backup-uri
-      - /proc:/host/proc:ro           # acces la proc gazdă
-      - /sys:/host/sys:ro             # senzori hardware
-      - /etc:/host/etc:ro             # versiune OS
-      - /var/run/docker.sock:/var/run/docker.sock:ro  # acces la Docker gazdă
-    network_mode: "host"              # IP real al gazdei
+      - shared-data:/data
     restart: always
 
   backup:
@@ -26,7 +22,10 @@ services:
       - BACKUP_INTERVAL=5
       - BACKUP_DIR=/data/backup
     volumes:
-      - ./data:/data:rw
+      - shared-data:/data
     depends_on:
       - monitoring
     restart: always
+
+volumes:
+  shared-data:

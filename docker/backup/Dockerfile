@@ -6,7 +6,12 @@ COPY ./scripts/backup.py .
 
 ENV BACKUP_INTERVAL=5
 ENV BACKUP_DIR=/data/backup
+ENV LOG_FILE=/data/system-state.log
 
-VOLUME ["/data"]
+RUN mkdir -p /data/backup && \
+    mkdir -p /data && \
+    chmod -R 777 /data
+
+VOLUME [ "/data" ]
 
 CMD ["python", "backup.py"]
