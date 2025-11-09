@@ -31,11 +31,12 @@ Ambele servicii folosesc un volum partajat montat în `/data`, pentru a permite 
 
 ## Rulare locală cu Docker Compose
 
-> Execută aceste comenzi din directorul **rădăcină al proiectului**
 
 1. Clonarea proiectului
     git clone https://github.com/VVovnenciuc/platforma-monitorizare.git
     cd platforma-monitorizare
+
+Execută toate comenzile de mai jos din directorul **rădăcină al proiectului**
 
 2. Construirea și pornirea containerelor
     docker-compose -f docker/docker-compose.yaml up --build -d
