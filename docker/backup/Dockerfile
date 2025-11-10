@@ -5,6 +5,7 @@ WORKDIR /app
 COPY ./scripts/backup.py .
 
 ENV BACKUP_INTERVAL=5
+ENV DATA_DIR=/data
 ENV BACKUP_DIR=/data/backup
 ENV LOG_FILE=/data/system-state.log
 

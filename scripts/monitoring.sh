@@ -2,7 +2,7 @@
 set -euo pipefail
 
 INTERVAL=${INTERVAL:-5}
-DATA_DIR="/data"
+DATA_DIR="${DATA_DIR:-/data}"
 LOG_FILE="$DATA_DIR/system-state.log"
 
 # Verifică dacă se poate scrie în fișierul de log
@@ -72,40 +72,11 @@ while :; do
     /TX:/ {getline; tx=$1}
     END {if(iface!="" && rx!="" && tx!="") printf "|   %-15s: RX %12s  | TX %12s\n", iface, rx, tx}'
 
-  # --- CPU Temperature ---
-  echo
-  temps=()
-  for f in /host/sys/class/thermal/thermal_zone*/temp; do
-    [ -f "$f" ] || continue
-    t=$(cat "$f")
-    temps+=($((t/1000)))
-  done
-  if [ ${#temps[@]} -gt 0 ]; then
-    sum=0
-    for v in "${temps[@]}"; do sum=$((sum+v)); done
-    avg=$((sum/${#temps[@]}))
-    print_section "CPU Temperature" "${avg}°C"
-  else
-    print_section "CPU Temperature" "N/A"
-  fi
-
   # --- Top 5 CPU Processes ---
   echo
   echo "+-- Top 5 CPU Processes"
   ps -eo pid,pcpu,pmem,comm --sort=-pcpu | head -n 6 | tail -n 5 |
     awk '{printf "|   PID: %6s  CPU: %5s%%  MEM: %5s%%  CMD: %s\n", $1, $2, $3, $4}'
-
-  # --- Docker Containers ---
-  echo
-  if [ -S /var/run/docker.sock ]; then
-    running=$(docker ps -q 2>/dev/null | wc -l)
-    print_section "Docker Containers Running" "$running"
-    echo "+-- Top Containers"
-    docker ps --format '{{.ID}} {{.Names}} {{.Status}}' | head -n 5 |
-      awk '{printf "    → %-20s %s\n", $2, $3}'
-  else
-    print_section "Docker Containers" "N/A (docker socket missing)"
-  fi
 
   # --- OS Info ---
   echo
