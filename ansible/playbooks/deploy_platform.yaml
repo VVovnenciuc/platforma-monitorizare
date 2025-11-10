@@ -25,3 +25,4 @@
         project_src: "{{ project_dir }}/docker"
         state: present
         remove_orphans: true
+        build: always

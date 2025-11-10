@@ -117,11 +117,28 @@ Pentru a folosi imaginile în Kubernetes sau în alte medii, este recomandat să
 
 ## Rulare cu Ansible
 
-1. 
-    ansible-playbook -i ansible/inventory.ini ansible/playbooks.install_docker.yaml
+1. Execută playbook-ul care instalează Docker:
+    ansible-playbook -i ansible/inventory.ini ansible/playbooks/install_docker.yaml
 
-2. 
+2. Rulează playbook-ul de deploy pentru a crea volumele, containerele și configurațiile necesare:
     ansible-playbook -i ansible/inventory.ini ansible/playbooks/deploy_platform.yaml
+
+3. Verificarea stării aplicației
+
+După rularea playbook-ului, poți verifica starea containerelor pe host-uri folosind comenzi Docker prin Ansible:
+
+ansible all -i ansible/inventory.ini -m shell -a "docker ps"
+
+
+Sau verifică logurile containerelor direct:
+
+ansible all -i ansible/inventory.ini -m shell -a "docker logs monitoring_service"
+ansible all -i ansible/inventory.ini -m shell -a "docker logs backup_service"
+
+
+
+
+
 
 Recomandari verificare cod:
 Script bash:
