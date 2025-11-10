@@ -15,10 +15,11 @@ from logging.handlers import RotatingFileHandler
 
 # ===== Configurări din variabile de mediu =====
 BACKUP_INTERVAL = int(os.getenv("BACKUP_INTERVAL", "5"))  # secunde
-DATA_DIR = "/data"                                       # directorul montat pe gazdă
+DATA_DIR = "/data"                               # directorul montat pe gazdă
 LOG_FILE = os.path.join(DATA_DIR, "system-state.log")
-BACKUP_DIR = os.getenv("BACKUP_DIR", os.path.join(DATA_DIR, "backup"))  # flexibil
-LOG_FILENAME = os.path.join(DATA_DIR, "backup.log")     # log propriu pentru backup
+BACKUP_DIR = os.getenv("BACKUP_DIR", os.path.join(DATA_DIR, "backup"))
+LOG_FILENAME = os.path.join(DATA_DIR, "backup.log")     # log pentru backup
+
 
 # ===== Configurare logging =====
 logger = logging.getLogger("backup_logger")
@@ -42,6 +43,7 @@ logger.handlers.clear()
 logger.addHandler(console_handler)
 logger.addHandler(rotating_handler)
 
+
 # ===== Asigură existența directoarelor =====
 for d in [DATA_DIR, BACKUP_DIR]:
     try:
@@ -53,6 +55,7 @@ for d in [DATA_DIR, BACKUP_DIR]:
 
 logger.info("Rulează ca utilizator: %s", os.getenv("USER", "unknown"))
 
+
 # ===== Funcții =====
 def file_hash(path: str) -> str | None:
     """Calculează hash-ul MD5 al fișierului."""
@@ -62,7 +65,9 @@ def file_hash(path: str) -> str | None:
     except FileNotFoundError:
         return None
     except OSError as err:
-        logger.error("Nu s-a putut calcula hash-ul fișierului %s: %s", path, err)
+        logger.error(
+            "Nu s-a putut calcula hash-ul fișierului %s: %s", path, err
+            )
         return None
 
 
@@ -80,6 +85,7 @@ def backup_file(src_path: str, dest_dir: str) -> None:
 
 # ===== Loop principal =====
 def main() -> None:
+    """Bucla principală de backup al fișierului system-state.log."""
     logger.info("Pornit backup monitor pentru %s", LOG_FILE)
     logger.info("Interval backup: %d secunde", BACKUP_INTERVAL)
     logger.info("Director backup: %s", BACKUP_DIR)
@@ -97,14 +103,18 @@ def main() -> None:
             current_hash = file_hash(LOG_FILE)
 
             if current_hash is None:
-                logger.warning("Fișierul %s nu există sau nu poate fi citit.", LOG_FILE)
+                logger.warning(
+                    "Fișierul %s nu există sau nu poate fi citit.", LOG_FILE
+                    )
                 continue
 
             if current_hash != last_hash:
                 backup_file(LOG_FILE, BACKUP_DIR)
                 last_hash = current_hash
             else:
-                logger.info("Nicio modificare în %s, nu se face backup.", LOG_FILE)
+                logger.info(
+                    "Nicio modificare în %s, nu se face backup.", LOG_FILE
+                    )
 
         except KeyboardInterrupt:
             logger.info("Script oprit de utilizator.")

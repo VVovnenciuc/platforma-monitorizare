@@ -8,9 +8,10 @@ Acest proiect conține două servicii care colaborează pentru a monitoriza și 
 ## Cerințe
 
 - [Docker](https://docs.docker.com/get-docker/) (versiune recentă)
-- [Docker Compose](https://docs.docker.com/compose/install/) (de preferat integrat în Docker)
-- [kubectl](https://kubernetes.io/docs/tasks/tools/) — pentru rulare în Kubernetes (opțional)
-- Un cluster Kubernetes local (ex: Minikube, Kind) sau remote (opțional)
+- [Docker Compose](https://docs.docker.com/compose/install/)
+- Python 3 și pip
+- [kubectl](https://kubernetes.io/docs/tasks/tools/) — pentru rulare în Kubernetes
+- Un cluster Kubernetes local (ex: Minikube) sau remote (opțional)
 
 ## Configurare
 
@@ -23,6 +24,8 @@ Poți personaliza comportamentul serviciilor prin variabile de mediu, atât în 
 | `INTERVAL`       | monitoring | Intervalul de monitorizare (secunde)      | `5`            |
 | `BACKUP_INTERVAL`| backup     | Intervalul de backup (secunde)            | `5`            |
 | `BACKUP_DIR`     | backup     | Directorul unde se salvează backup-ul     | `/data/backup` |
+
+Valorile implicite sunt deja definite în Docker Compose, deci nu e obligatoriu să le setezi.
 
 ### Volume partajate
 
@@ -41,23 +44,18 @@ Execută toate comenzile de mai jos din directorul **rădăcină al proiectului*
 2. Construirea și pornirea containerelor
     docker compose -f docker/docker-compose.yaml up --build -d
 
-3. Verificarea containerelor
+3. Verificarea containere si loguri:
     docker compose -f docker/docker-compose.yaml ps
-
-4. Vizualizarea log-urilor
     docker compose -f docker/docker-compose.yaml logs -f
     docker compose -f docker/docker-compose.yaml logs -f monitoring
     docker compose -f docker/docker-compose.yaml logs -f backup
 
-5. Oprirea containerelor
-    docker compose -f docker/docker-compose.yaml down
-    Daca doriti sa stergeti si volumele:
-    docker compose -f docker/docker-compose.yaml down -v
+4. Oprirea containerelor
+    docker compose -f docker/docker-compose.yaml down          # fără volume
+    docker compose -f docker/docker-compose.yaml down -v       # cu volume
 
 
 ## Construirea și publicarea imaginilor în Docker Hub
-
-Pentru a folosi imaginile în Kubernetes sau în alte medii, este recomandat să le construiești și să le urci într-un registry public sau privat.
 
 1. Autentificare în Docker Hub
     docker login
@@ -69,7 +67,7 @@ Pentru a folosi imaginile în Kubernetes sau în alte medii, este recomandat să
     docker tag monitoring_image:latest dockerhubuser/monitoring_image:latest
     docker tag backup_image:latest dockerhubuser/backup_image:latest
 
-    !!! Înlocuiește dockerhubuser cu numele tău de utilizator Docker Hub. 
+    !!! Înlocuiește dockerhubuser cu numele tău Docker Hub. 
 
 4. Publicarea imaginilor
     docker push dockerhubuser/monitoring_image:latest
@@ -82,16 +80,15 @@ Pentru a folosi imaginile în Kubernetes sau în alte medii, este recomandat să
 1. Actualizează manifestul Kubernetes k8s/02-deployment.yaml cu numele imaginilor tale (din Docker Hub)
     image: dockerhubuser/monitoring_image:latest
     image: dockerhubuser/backup_image:latest
+
 2. Porneste minikube:
     minikube start
 
 3. Aplică toate manifestele
     kubectl apply -f k8s/
 
-4. Verifică aplicația:
+4. Verifică resurse:
     kubectl get all -n monitoring
-
-    sau separat:
     kubectl get ns
     kubectl get hpa -n monitoring
     kubectl get pods -n monitoring
@@ -99,15 +96,13 @@ Pentru a folosi imaginile în Kubernetes sau în alte medii, este recomandat să
 
 5. Testează accesul la nginx:
     kubectl port-forward svc/nginx-service 8080:80 -n monitoring
+    # apoi deschide http://localhost:8080
 
-6.  Apoi deschide browserul la:
-    http://localhost:8080
-
-7.  Sau acceseaza din browser fara port-forward:
+  Sau fara port-forward:
     http://<minikube-ip>:30080
     (minikube ip  - pentru a afla ip)
 
-8. Verifică logurile aplicației:
+6. Verificare loguri containere:
     kubectl logs <nume-pod> -c monitoring -n monitoring
     kubectl logs <nume-pod> -c backup -n monitoring
     kubectl logs <nume-pod> -c nginx -n monitoring
@@ -117,30 +112,23 @@ Pentru a folosi imaginile în Kubernetes sau în alte medii, este recomandat să
 
 ## Rulare cu Ansible
 
-1. Execută playbook-ul care instalează Docker:
+1. Instalare Docker pe host-uri:
     ansible-playbook -i ansible/inventory.ini ansible/playbooks/install_docker.yaml
 
-2. Rulează playbook-ul de deploy pentru a crea volumele, containerele și configurațiile necesare:
+2. Deploy platforma:
     ansible-playbook -i ansible/inventory.ini ansible/playbooks/deploy_platform.yaml
 
-3. Verificarea stării aplicației
-
-După rularea playbook-ului, poți verifica starea containerelor pe host-uri folosind comenzi Docker prin Ansible:
-
-ansible all -i ansible/inventory.ini -m shell -a "docker ps"
-
-
-Sau verifică logurile containerelor direct:
-
-ansible all -i ansible/inventory.ini -m shell -a "docker logs monitoring_service"
-ansible all -i ansible/inventory.ini -m shell -a "docker logs backup_service"
+3. Verificare containere și loguri prin Ansible:
+    ansible all -i ansible/inventory.ini -m shell -a "docker ps"
+    ansible all -i ansible/inventory.ini -m shell -a "docker logs monitoring_service"
+    ansible all -i ansible/inventory.ini -m shell -a "docker logs backup_service"
 
 
 
 
 
 
-Recomandari verificare cod:
+## Recomandari verificare cod:
 Script bash:
     bash -n scripts/monitoring.sh   # pentru a testa dacă scriptul are erori de sintaxă
     bash -x scripts/monitoring.sh   # pentru debug, util dacă scriptul se blochează sau nu produce rezultatul așteptat
