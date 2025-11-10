@@ -4,6 +4,7 @@ pipeline {
         DOCKER_IMAGE = "vvovnenciuc/monitoring_image:latest"
         PROJECT_DIR = "${WORKSPACE}"
         DOCKER_TAG = "${params.DOCKER_TAG}"
+        DATA_DIR = "${WORKSPACE}/data"
     }
 
     parameters {
@@ -34,6 +35,18 @@ pipeline {
         stage('Bash Lint') {
             steps {
                 sh 'bash -n scripts/monitoring.sh'
+            }
+        }
+
+        stage('Prepare Backup Directory') {
+            steps {
+                script {
+                    sh '''
+                        mkdir -p ${WORKSPACE}/data
+                        chmod 777 ${WORKSPACE}/data
+                    '''
+                    echo "Directorul /data pentru backup a fost creat în workspace"
+                }
             }
         }
 

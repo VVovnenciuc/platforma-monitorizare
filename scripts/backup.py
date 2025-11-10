@@ -14,8 +14,8 @@ import sys
 from logging.handlers import RotatingFileHandler
 
 # ===== Configurări din variabile de mediu =====
-BACKUP_INTERVAL = int(os.getenv("BACKUP_INTERVAL", "5"))  # secunde
-DATA_DIR = "/data"                               # directorul montat pe gazdă
+BACKUP_INTERVAL = int(os.getenv("BACKUP_INTERVAL", "5"))
+DATA_DIR = os.getenv("DATA_DIR", os.path.join(os.getcwd(), "data"))
 LOG_FILE = os.path.join(DATA_DIR, "system-state.log")
 BACKUP_DIR = os.getenv("BACKUP_DIR", os.path.join(DATA_DIR, "backup"))
 LOG_FILENAME = os.path.join(DATA_DIR, "backup.log")     # log pentru backup
