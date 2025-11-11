@@ -23,6 +23,7 @@ RUN mkdir -p /data && chmod -R 777 /data
 
 # Directorul de lucru din container
 WORKDIR /data
+VOLUME ["/data"]
 
 # Comandă implicită
 CMD ["/usr/local/bin/monitoring.sh"]

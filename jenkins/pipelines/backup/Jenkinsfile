@@ -2,8 +2,10 @@ pipeline {
     agent any
     environment {
         DOCKER_IMAGE = "vvovnenciuc/backup_image:latest"
-        PROJECT_DIR = "${WORKSPACE}"
         DOCKER_TAG = "${params.DOCKER_TAG}"
+        STAGE_APP1_USER = 'vvovnenciuc'
+        STAGE_APP1_HOST = '192.168.0.222'
+        CONTAINER_NAME = 'backup_service'
     }
     parameters {
         string(name: 'DOCKER_TAG', defaultValue: 'latest', description: 'Tag pentru imaginea Docker')
@@ -42,18 +44,6 @@ pipeline {
                     pip install flake8
                     flake8 scripts
                 '''
-            }
-        }
-
-        stage('Prepare Backup Directory') {
-            steps {
-                script {
-                    sh '''
-                        mkdir -p ${WORKSPACE}/data
-                        chmod 777 ${WORKSPACE}/data
-                    '''
-                    echo "Directorul /data pentru backup a fost creat în workspace"
-                }
             }
         }
 
@@ -102,6 +92,21 @@ pipeline {
                             docker logout
                         '''
                     }
+                }
+            }
+        }
+
+        stage('Deploy to stage-app1') {
+            steps {
+                sshagent(['ssh-key-to-stage-app1']) {
+                    sh """
+                        ssh -o StrictHostKeyChecking=no ${STAGE_APP1_USER}@${STAGE_APP1_HOST} '
+                            docker pull ${DOCKER_IMAGE} &&
+                            docker stop ${CONTAINER_NAME} || true &&
+                            docker rm ${CONTAINER_NAME} || true &&
+                            docker run -d --name ${CONTAINER_NAME} -v /data:/data ${DOCKER_IMAGE}
+                        '
+                    """
                 }
             }
         }
