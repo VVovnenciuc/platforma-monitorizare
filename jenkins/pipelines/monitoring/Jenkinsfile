@@ -26,6 +26,18 @@ pipeline {
             }
         }
 
+        stage('Prepare Backup Directory') {
+            steps {
+                script {
+                    sh '''
+                        mkdir -p ${WORKSPACE}/data
+                        chmod 777 ${WORKSPACE}/data
+                    '''
+                    echo "Directorul /data pentru backup a fost creat în workspace"
+                }
+            }
+        }
+        
         stage('Get Commit Hash') {
             steps {
                 script {
