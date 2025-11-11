@@ -64,18 +64,18 @@ Execută toate comenzile de mai jos din directorul **rădăcină al proiectului*
     docker compose -f docker/docker-compose.yaml build
 
 3. Etichetarea imaginilor 
-    docker tag monitoring_image:latest dockerhubuser/monitoring_image:latest
-    docker tag backup_image:latest dockerhubuser/backup_image:latest
+    docker tag monitoring_image:latest vvovnenciuc/monitoring_image:latest
+    docker tag backup_image:latest vvovnenciuc/backup_image:latest
 
-    !!! Înlocuiește dockerhubuser cu numele tău Docker Hub. 
+    !!! Înlocuiește vvovnenciuc cu numele tău Docker Hub. 
 
 4. Publicarea imaginilor
-    docker push dockerhubuser/monitoring_image:latest
-    docker push dockerhubuser/backup_image:latest
+    docker push vvovnenciuc/monitoring_image:latest
+    docker push vvovnenciuc/backup_image:latest
 
 ## Rularea în Kubernetes
 
-> Asigură-te că imaginile sunt publicate în Docker Hub sau accesibile de către cluster
+> Asigură-te că imaginile sunt publicate în Docker Hub
 
 1. Actualizează manifestul Kubernetes k8s/02-deployment.yaml cu numele imaginilor tale (din Docker Hub)
     image: dockerhubuser/monitoring_image:latest
@@ -110,6 +110,8 @@ Execută toate comenzile de mai jos din directorul **rădăcină al proiectului*
     !!! Înlocuiește <nume-pod> cu numele podului. Pentru a afla numele podurilor executa:
     kubectl get pods -n monitoring
 
+    kubectl exec -it <nume pod> -n monitoring -- /bin/bash
+
 7. Sterge toate resursele:
     kubectl delete -f k8s/
 
@@ -126,8 +128,9 @@ Execută toate comenzile de mai jos din directorul **rădăcină al proiectului*
     ansible all -i ansible/inventory.ini -m shell -a "docker logs monitoring_service"
     ansible all -i ansible/inventory.ini -m shell -a "docker logs backup_service"
 
-
-
+4. Oprire containere:
+    ansible all -i ansible/inventory.ini -m shell -a "docker stop monitoring_service"
+    ansible all -i ansible/inventory.ini -m shell -a "docker stop backup_service"
 
 
 

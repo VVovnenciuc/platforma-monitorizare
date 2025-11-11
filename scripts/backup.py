@@ -56,7 +56,7 @@ for d in [DATA_DIR, BACKUP_DIR]:
 logger.info("Rulează ca utilizator: %s", os.getenv("USER", "unknown"))
 
 
-# ===== Funcții =====
+# ====== Funcții ======
 def file_hash(path: str) -> str | None:
     """Calculează hash-ul MD5 al fișierului."""
     try:
