@@ -133,6 +133,29 @@ Execută toate comenzile de mai jos din directorul **rădăcină al proiectului*
     ansible all -i ansible/inventory.ini -m shell -a "docker stop backup_service"
 
 
+## Deploy cu Jenkins webhook
+
+1. Jenkins trebuie să fie accesibil public. Pentru aceasta poate fi folosit ngrok
+    ngrok http 8080
+    Obtinem URL: (cam asa arata) https://unglistening-allyn-supermarginally.ngrok-free.dev
+        URL-ul ngrok se schimbă la fiecare rulare gratuită.
+        Dacă vrei stabilitate, trebuie fie să folosești plan plătit ngrok sau să expui VM-ul cu IP public.
+
+2. În repository-ul tău GitHub → Settings → Webhooks → Add webhook
+    Completează:
+    Payload URL: https://unglistening-allyn-supermarginally.ngrok-free.dev/github-webhook/
+    Content type: application/json
+    Events: Just the push event
+    Click Add webhook
+
+3. În Jenkins, la job → Configure → Build Triggers
+    Trebuie să bifezi:
+        GitHub hook trigger for GITScm polling
+
+4. Faci un git push. Verifici daca porneste Jenkins build.
+
+
+
 
 ## Recomandari verificare cod:
 Script bash:
