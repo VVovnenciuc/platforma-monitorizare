@@ -110,6 +110,9 @@ Execută toate comenzile de mai jos din directorul **rădăcină al proiectului*
     !!! Înlocuiește <nume-pod> cu numele podului. Pentru a afla numele podurilor executa:
     kubectl get pods -n monitoring
 
+7. Sterge toate resursele:
+    kubectl delete -f k8s/
+
 ## Rulare cu Ansible
 
 1. Instalare Docker pe host-uri:

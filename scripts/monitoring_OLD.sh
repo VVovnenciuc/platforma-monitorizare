@@ -17,37 +17,8 @@ fi
   exit 1
 }
 
-# Detectare mediu (Docker / Kubernetes / Host)
-if [ -f /.dockerenv ]; then
-    ENVIRONMENT="docker"
-elif [ -n "${KUBERNETES_SERVICE_HOST:-}" ]; then
-    ENVIRONMENT="k8s"
-else
-    ENVIRONMENT="host"
-fi
-echo "Rulează în mediu: $ENVIRONMENT"
-
-# Setăm căile pentru proc, sys și etc în funcție de mediu
-case "$ENVIRONMENT" in
-    docker)
-        PROC_PATH="/host/proc"
-        ETC_PATH="/host/etc"
-        ;;
-    k8s)
-        PROC_PATH="/proc"
-        ETC_PATH="/etc"
-        ;;
-    host)
-        PROC_PATH="/proc"
-        ETC_PATH="/etc"
-        ;;
-esac
-
 print_section() { printf "%-25s: %s\n" "$1" "$2"; }
 
-# ===============================
-# Loop principal
-# ===============================
 while :; do
 {
   printf '%s\n' "+---------------------------------------------------------------+"
@@ -58,20 +29,20 @@ while :; do
   # --- Timestamp & Host ---
   print_section "Timestamp" "$(date '+%a %d %b %Y %H:%M:%S %Z')"
   print_section "Hostname" "$(hostname)"
-  print_section "Uptime" "$(awk '{print int($1/3600)"h "int(($1%3600)/60)"m"}' "$PROC_PATH/uptime" 2>/dev/null || echo 'N/A')"
+  print_section "Uptime" "$(awk '{print int($1/3600)"h "int(($1%3600)/60)"m"}' /host/proc/uptime 2>/dev/null || echo 'N/A')"
 
   # --- CPU Load ---
-  load=$(awk '{print $1,$2,$3}' "$PROC_PATH/loadavg" 2>/dev/null || echo "N/A")
+  load=$(awk '{print $1,$2,$3}' /host/proc/loadavg 2>/dev/null || echo "N/A")
   print_section "CPU Load (1/5/15)" "$load"
 
   # --- Memory Usage ---
   echo "+-- Memory Usage"
-  awk -v memfile="$PROC_PATH/meminfo" '/MemTotal/ {total=$2} /MemAvailable/ {avail=$2} END{
+  awk '/MemTotal/ {total=$2} /MemAvailable/ {avail=$2} END{
     used=total-avail
     if(used>1024){used_val=used/1024; u="MB"} else {used_val=used; u="kB"}
     if(total>1024){total_val=total/1024; tu="MB"} else {total_val=total; tu="kB"}
     printf "|   Memory: used %6.1f %s / total %6.1f %s\n", used_val, u, total_val, tu
-  }' "$PROC_PATH/meminfo" 2>/dev/null || echo "|   N/A"
+  }' /host/proc/meminfo 2>/dev/null || echo "|   N/A"
 
   # --- Disk Usage ---
   echo
@@ -88,7 +59,7 @@ while :; do
 
   # --- Processes & Users ---
   echo
-  print_section "Active Processes" "$(ls "$PROC_PATH" 2>/dev/null | grep -E '^[0-9]+$' | wc -l || echo N/A)"
+  print_section "Active Processes" "$(ls /host/proc 2>/dev/null | grep -E '^[0-9]+$' | wc -l || echo N/A)"
   print_section "Logged-in Users" "$(who 2>/dev/null | wc -l || echo N/A)"
   print_section "Primary IP" "$(hostname -I 2>/dev/null | awk '{print $1}' || echo N/A)"
 
@@ -109,10 +80,12 @@ while :; do
 
   # --- OS Info ---
   echo
-  OS_FILE="$ETC_PATH/os-release"
-  if [ -f "$OS_FILE" ]; then
-    OS_NAME=$(grep '^NAME=' "$OS_FILE" | cut -d= -f2 | tr -d '"')
-    OS_VERSION=$(grep '^VERSION=' "$OS_FILE" | cut -d= -f2 | tr -d '"')
+  # Detectăm fișierul OS de pe host (etc sau usr/lib)
+  HOST_OS_FILE="/host/etc/os-release"
+  [ ! -f "$HOST_OS_FILE" ] && HOST_OS_FILE="/host/usr/lib/os-release"
+  if [ -f "$HOST_OS_FILE" ]; then
+    OS_NAME=$(grep '^NAME=' "$HOST_OS_FILE" | cut -d= -f2 | tr -d '"')
+    OS_VERSION=$(grep '^VERSION=' "$HOST_OS_FILE" | cut -d= -f2 | tr -d '"')
     OS_INFO="$OS_NAME $OS_VERSION"
   else
     OS_INFO="N/A"
