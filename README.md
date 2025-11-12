@@ -161,7 +161,6 @@ Execută toate comenzile de mai jos din directorul **rădăcină al proiectului*
 
 
 
-
 ## Recomandari verificare cod:
 Script bash:
     bash -n scripts/monitoring.sh   # pentru a testa dacă scriptul are erori de sintaxă
