@@ -137,6 +137,7 @@ Execută toate comenzile de mai jos din directorul **rădăcină al proiectului*
 
 1. Jenkins trebuie să fie accesibil public. Pentru aceasta poate fi folosit ngrok
     ngrok http 8080
+    
     Obtinem URL: (cam asa arata) https://unglistening-allyn-supermarginally.ngrok-free.dev
         URL-ul ngrok se schimbă la fiecare rulare gratuită.
         Dacă vrei stabilitate, trebuie fie să folosești plan plătit ngrok sau să expui VM-ul cu IP public.
